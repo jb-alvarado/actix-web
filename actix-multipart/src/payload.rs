@@ -2,7 +2,7 @@ use std::{
     cell::{RefCell, RefMut},
     cmp, mem,
     pin::Pin,
-    rc::Rc,
+    sync::Arc,
     task::{Context, Poll},
 };
 
@@ -15,13 +15,13 @@ use futures_core::stream::{LocalBoxStream, Stream};
 use crate::{error::Error, safety::Safety};
 
 pub(crate) struct PayloadRef {
-    payload: Rc<RefCell<PayloadBuffer>>,
+    payload: Arc<RefCell<PayloadBuffer>>,
 }
 
 impl PayloadRef {
     pub(crate) fn new(payload: PayloadBuffer) -> PayloadRef {
         PayloadRef {
-            payload: Rc::new(RefCell::new(payload)),
+            payload: Arc::new(RefCell::new(payload)),
         }
     }
 
@@ -37,7 +37,7 @@ impl PayloadRef {
 impl Clone for PayloadRef {
     fn clone(&self) -> PayloadRef {
         PayloadRef {
-            payload: Rc::clone(&self.payload),
+            payload: Arc::clone(&self.payload),
         }
     }
 }

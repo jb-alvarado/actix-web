@@ -3,7 +3,7 @@
 use std::{
     cell::RefCell,
     pin::Pin,
-    rc::Rc,
+    sync::Arc,
     task::{Context, Poll},
 };
 
@@ -168,7 +168,7 @@ enum State {
 
 enum Item {
     None,
-    Field(Rc<RefCell<InnerField>>),
+    Field(Arc<RefCell<InnerField>>),
 }
 
 struct Inner {
@@ -448,7 +448,7 @@ impl Inner {
             let field_inner =
                 InnerField::new_in_rc(self.payload.clone(), self.boundary.clone(), &field_headers)?;
 
-            self.item = Item::Field(Rc::clone(&field_inner));
+            self.item = Item::Field(Arc::clone(&field_inner));
 
             Poll::Ready(Some(Ok(Field::new(
                 field_content_type,

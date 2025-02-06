@@ -1,4 +1,4 @@
-use std::{cell::Cell, marker::PhantomData, rc::Rc, task};
+use std::{cell::Cell, marker::PhantomData, sync::Arc, task};
 
 use local_waker::LocalWaker;
 
@@ -12,23 +12,23 @@ use local_waker::LocalWaker;
 pub(crate) struct Safety {
     task: LocalWaker,
     level: usize,
-    payload: Rc<PhantomData<bool>>,
-    clean: Rc<Cell<bool>>,
+    payload: Arc<PhantomData<bool>>,
+    clean: Arc<Cell<bool>>,
 }
 
 impl Safety {
     pub(crate) fn new() -> Safety {
-        let payload = Rc::new(PhantomData);
+        let payload = Arc::new(PhantomData);
         Safety {
             task: LocalWaker::new(),
-            level: Rc::strong_count(&payload),
-            clean: Rc::new(Cell::new(true)),
+            level: Arc::strong_count(&payload),
+            clean: Arc::new(Cell::new(true)),
             payload,
         }
     }
 
     pub(crate) fn current(&self) -> bool {
-        Rc::strong_count(&self.payload) == self.level && self.clean.get()
+        Arc::strong_count(&self.payload) == self.level && self.clean.get()
     }
 
     pub(crate) fn is_clean(&self) -> bool {
@@ -36,10 +36,10 @@ impl Safety {
     }
 
     pub(crate) fn clone(&self, cx: &task::Context<'_>) -> Safety {
-        let payload = Rc::clone(&self.payload);
+        let payload = Arc::clone(&self.payload);
         let s = Safety {
             task: LocalWaker::new(),
-            level: Rc::strong_count(&payload),
+            level: Arc::strong_count(&payload),
             clean: self.clean.clone(),
             payload,
         };
@@ -50,7 +50,7 @@ impl Safety {
 
 impl Drop for Safety {
     fn drop(&mut self) {
-        if Rc::strong_count(&self.payload) != self.level {
+        if Arc::strong_count(&self.payload) != self.level {
             // Multipart dropped leaving a Field
             self.clean.set(false);
         }

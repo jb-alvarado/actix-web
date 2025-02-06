@@ -4,7 +4,7 @@ use std::{
     future::poll_fn,
     mem,
     pin::Pin,
-    rc::Rc,
+    sync::Arc,
     task::{ready, Context, Poll},
 };
 
@@ -49,7 +49,7 @@ pub struct Field {
     headers: HeaderMap,
 
     safety: Safety,
-    inner: Rc<RefCell<InnerField>>,
+    inner: Arc<RefCell<InnerField>>,
 }
 
 impl Field {
@@ -59,7 +59,7 @@ impl Field {
         form_field_name: Option<String>,
         headers: HeaderMap,
         safety: Safety,
-        inner: Rc<RefCell<InnerField>>,
+        inner: Arc<RefCell<InnerField>>,
     ) -> Self {
         Field {
             content_type,
@@ -225,8 +225,8 @@ impl InnerField {
         payload: PayloadRef,
         boundary: String,
         headers: &HeaderMap,
-    ) -> Result<Rc<RefCell<InnerField>>, PayloadError> {
-        Self::new(payload, boundary, headers).map(|this| Rc::new(RefCell::new(this)))
+    ) -> Result<Arc<RefCell<InnerField>>, PayloadError> {
+        Self::new(payload, boundary, headers).map(|this| Arc::new(RefCell::new(this)))
     }
 
     pub(crate) fn new(
